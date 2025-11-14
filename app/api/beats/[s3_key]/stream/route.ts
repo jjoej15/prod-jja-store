@@ -1,4 +1,4 @@
-import { getObjectStream } from '@/lib/s3';
+import { getObjectRangeStream } from '@/lib/s3';
 
 export const runtime = 'nodejs';
 
@@ -13,12 +13,15 @@ export async function GET(
             return new Response(
                 'WAV files not available for streaming', { status: 400 });
         }
-        
-        const { stream } = await getObjectStream(s3_key);
+        const range = _req.headers.get('range') || undefined;
+        const { stream, contentRange, contentLength } = await getObjectRangeStream(s3_key, range);
         return new Response(stream, {
-            status: 200,
+            status: 206,
             headers: {
                 'Content-Type': 'audio/mpeg',
+                'Accept-Ranges': 'bytes',
+                ...(contentRange ? { 'Content-Range': contentRange } : {}),
+                ...(contentLength ? { 'Content-Length': String(contentLength) } : {}),
                 'Cache-Control': 'no-store',
             },
         });
