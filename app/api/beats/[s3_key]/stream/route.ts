@@ -14,7 +14,7 @@ export async function GET(
                 'WAV files not available for streaming', { status: 400 });
         }
         const range = _req.headers.get('range') || undefined;
-        const { stream, contentRange, contentLength } = await getObjectRangeStream(s3_key, range);
+        const { stream, contentRange, contentLength } = await getObjectRangeStream(s3_key, range, _req.signal);
         return new Response(stream, {
             status: 206,
             headers: {

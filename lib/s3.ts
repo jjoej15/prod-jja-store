@@ -1,11 +1,26 @@
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { NodeHttpHandler } from '@smithy/node-http-handler';
+import http from 'http';
+import https from 'https';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const region = process.env.AWS_REGION || 'us-east-1';
 
-// Reuse client across hot reloads
+// Configure pooled keep-alive agents to raise socket capacity and recycle idle sockets
+const maxSockets = Number.parseInt(process.env.S3_MAX_SOCKETS || '256', 10);
+const socketWarnMs = Number.parseInt(process.env.S3_SOCKET_WARN_TIMEOUT_MS || '2000', 10);
+const httpAgent = new http.Agent({ keepAlive: true, maxSockets });
+const httpsAgent = new https.Agent({ keepAlive: true, maxSockets });
+const requestHandler = new NodeHttpHandler({
+    httpAgent,
+    httpsAgent,
+    socketAcquisitionWarningTimeout: socketWarnMs,
+});
+
+// Reuse client across hot reloads (Next.js dev) to avoid creating many pools.
 const globalForS3 = global as unknown as { s3Client?: S3Client };
-export const s3: S3Client = globalForS3.s3Client || new S3Client({ region });
+export const s3: S3Client = globalForS3.s3Client 
+    || new S3Client({ region, requestHandler });
 
 if (!globalForS3.s3Client) {
     globalForS3.s3Client = s3;
@@ -23,14 +38,14 @@ export async function getPreviewUrl(key: string): Promise<string> {
 }
 
 
-// Ranged streaming support: ~251 KB by default
-const DEFAULT_CHUNK = Number.parseInt(process.env.STREAM_CHUNK_BYTES || '257024', 10);
+// Ranged streaming support: 1MB default
+const DEFAULT_CHUNK = Number.parseInt(process.env.STREAM_CHUNK_BYTES || '1048576', 10);
 
 function parseRangeHeader(rangeHeader?: string): { start?: number; end?: number } {
-    if (!rangeHeader) 
+    if (!rangeHeader)
         return {};
     const m = rangeHeader.match(/bytes=(\d*)-(\d*)/);
-    if (!m) 
+    if (!m)
         return {};
     const start = m[1] ? Number.parseInt(m[1], 10) : undefined;
     const end = m[2] ? Number.parseInt(m[2], 10) : undefined;
@@ -52,20 +67,20 @@ function normalizeRange(rangeHeader?: string, maxChunk = DEFAULT_CHUNK): string 
 }
 
 
-export async function getObjectRangeStream(key: string, rangeHeader?: string) {
+export async function getObjectRangeStream(key: string, rangeHeader?: string, abortSignal?: AbortSignal) {
     const bucket = process.env.S3_BUCKET;
-    if (!bucket) 
+    if (!bucket)
         throw new Error('S3_BUCKET env var missing');
 
     const normalizedRange = normalizeRange(rangeHeader);
-    const cmd = new GetObjectCommand({ 
-        Bucket: bucket, 
-        Key: key, 
-        Range: normalizedRange 
+    const cmd = new GetObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Range: normalizedRange
     });
-    const obj = await s3.send(cmd);
+    const obj = await s3.send(cmd, { abortSignal });
 
-    if (!obj.Body) 
+    if (!obj.Body)
         throw new Error('Empty S3 object body');
     const body: any = obj.Body;
     const webStream = typeof body.transformToWebStream === 'function'
