@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import { playIcon, pauseIcon } from '@/app/assets/images'
 import type { Beat } from '@/lib/types'
-import { centsToUSD } from '@/lib/utils'
+import ArrowIcon from '@/app/components/arrow-icon'
 
 interface Props {
     beats: Beat[]
@@ -30,13 +30,20 @@ export default function BeatsList({ beats, currentId, isPlaying, onToggle }: Pro
                         </div>
                         <div className="flex items-center gap-4 text-sm flex-shrink-0 ml-4">
                             <div className="flex flex-col items-end">
-                                <span className="text-xs text-zinc-600">MP3 Lease</span>
-                                <span className="font-medium">{centsToUSD(b.price_mp3_lease_cents)}</span>
+                                <a
+                                    className="group flex items-center transition-colors hover:text-neutral-600 dark:hover:text-neutral-300"
+                                    rel="noopener noreferrer"
+                                    href={`/beats/${b.id}/buy`}
+                                >
+                                    <ArrowIcon className="text-neutral-600 dark:text-neutral-300 group-hover:text-neutral-800 
+                                        dark:group-hover:text-neutral-400 transition-colors" />
+                                    <p className="ml-2 font-medium">buy</p>
+                                </a>
                                 <span className="text-[10px] text-zinc-500">{b.bpm} BPM</span>
                             </div>
                             <button
                                 onClick={() => onToggle(b)}
-                                className="px-2 py-1 transition flex items-center justify-center shrink-0"
+                                className="group px-2 py-1 transition flex items-center justify-center shrink-0"
                                 aria-label={playing ? `Pause ${b.title}` : active && !playing ? `Resume ${b.title}` : `Play ${b.title}`}
                                 aria-pressed={playing}
                             >
@@ -45,7 +52,7 @@ export default function BeatsList({ beats, currentId, isPlaying, onToggle }: Pro
                                     alt={playing ? `Pause ${b.title}` : `Play ${b.title}`}
                                     width={24}
                                     height={24}
-                                    className='hover:cursor-pointer'
+                                    className="w-6 h-6 hover:cursor-pointer transition group-hover:brightness-75"
                                 />
                             </button>
                         </div>
