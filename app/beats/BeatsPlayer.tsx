@@ -7,16 +7,17 @@ import { centsToUSD, formatTime } from '@/lib/utils'
 
 interface Props {
     beats: Beat[]
-    onStateChange?: (s: { 
-        currentId: string | null; 
-        isPlaying: boolean; 
-        onToggle: (b: Beat) => void 
+    onStateChange?: (s: {
+        currentId: string | null;
+        isPlaying: boolean;
+        onToggle: (b: Beat) => void
     }) => void
 }
 
 export default function BeatsPlayer({ beats, onStateChange }: Props) {
     const audioRef = useRef<HTMLAudioElement | null>(null)
     const [currentIndex, setCurrentIndex] = useState<number | null>(null)
+    const currentIndexRef = useRef<number | null>(null)
     const [isPlaying, setIsPlaying] = useState(false)
     const [duration, setDuration] = useState(0)
     const [progress, setProgress] = useState(0)
@@ -51,6 +52,11 @@ export default function BeatsPlayer({ beats, onStateChange }: Props) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Keep a live ref of currentIndex to avoid stale closures in event listeners
+    useEffect(() => {
+        currentIndexRef.current = currentIndex
+    }, [currentIndex])
+
     const currentBeat = currentIndex !== null ? beats[currentIndex] : null
 
     const loadAndPlay = useCallback((beat: Beat, resumePos: number) => {
@@ -61,10 +67,10 @@ export default function BeatsPlayer({ beats, onStateChange }: Props) {
         audio.load()
         audio.onloadedmetadata = async () => {
             audio.currentTime = resumePos
-            try { 
-                await audio.play(); 
-                setIsPlaying(true) 
-            }  catch { setIsPlaying(false) }
+            try {
+                await audio.play();
+                setIsPlaying(true)
+            } catch { setIsPlaying(false) }
         }
     }, [])
 
@@ -90,9 +96,10 @@ export default function BeatsPlayer({ beats, onStateChange }: Props) {
             setIsPlaying(false)
             return
         } else if (currentIndex === idx) {
-            audio.currentTime = existingPos
-            audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false))
-            return
+            // Resume same track from the current slider position
+            audio.play().then(() => setIsPlaying(true))
+                .catch(() => setIsPlaying(false));
+            return;
         }
 
         setCurrentIndex(idx)
@@ -127,9 +134,10 @@ export default function BeatsPlayer({ beats, onStateChange }: Props) {
     }
 
     function skipForward() {
-        // Advance to next track
+        // Advance to next track (uses ref to avoid stale state in event handlers)
         if (beats.length === 0) return
-        const nextIndex = currentIndex === null ? 0 : (currentIndex + 1) % beats.length
+        const idx = currentIndexRef.current
+        const nextIndex = idx === null ? 0 : (idx + 1) % beats.length
         const beat = beats[nextIndex]
         setCurrentIndex(nextIndex)
         loadAndPlay(beat, 0)
@@ -151,6 +159,10 @@ export default function BeatsPlayer({ beats, onStateChange }: Props) {
         const value = Number(e.target.value)
         audio.currentTime = value
         setProgress(value)
+        // If paused, persist this seek so resuming or coming back to this track starts here
+        if (currentBeat && !isPlaying) {
+            setPositions(p => ({ ...p, [currentBeat.id]: value }))
+        }
     }
 
     const progressPercent = duration > 0 ? (progress / duration) * 100 : 0
@@ -158,10 +170,10 @@ export default function BeatsPlayer({ beats, onStateChange }: Props) {
     // Notify parent of state changes
     useEffect(() => {
         // Emit minimal state up to parent whenever track or play status changes.
-        onStateChange?.({ 
-            currentId: currentBeat?.id || null, 
-            isPlaying, 
-            onToggle: toggleBeat 
+        onStateChange?.({
+            currentId: currentBeat?.id || null,
+            isPlaying,
+            onToggle: toggleBeat
         })
     }, [currentBeat?.id, isPlaying, onStateChange]);
 
@@ -176,8 +188,8 @@ export default function BeatsPlayer({ beats, onStateChange }: Props) {
                         {currentBeat ? currentBeat.title : 'No track selected'}
                     </div>
                     <div className="text-xs text-zinc-300 truncate">
-                        {currentBeat 
-                            ? (currentBeat.artists.join(', ').replace('jj.aholics', 'Joe Anderson') || 'Unknown Artist') 
+                        {currentBeat
+                            ? (currentBeat.artists.join(', ').replace('jj.aholics', 'Joe Anderson') || 'Unknown Artist')
                             : '—'
                         }
                     </div>
@@ -209,9 +221,9 @@ export default function BeatsPlayer({ beats, onStateChange }: Props) {
                             className="p-2 rounded border border-zinc-700 hover:bg-zinc-800 shrink-0"
                             aria-label="Restart (single) or previous track (double)"
                         >
-                            <Image 
+                            <Image
                                 src={backwardStepIcon} alt="Restart"
-                                width={20} height={20} 
+                                width={20} height={20}
                                 className="w-[20px] h-[20px] shrink-0 hover:cursor-pointer" />
                         </button>
                         <button
@@ -220,7 +232,7 @@ export default function BeatsPlayer({ beats, onStateChange }: Props) {
                                 flex items-center justify-center shrink-0"
                             aria-label={isPlaying ? 'Pause' : 'Play'}
                         >
-                            <Image src={isPlaying ? pauseIcon : playIcon} 
+                            <Image src={isPlaying ? pauseIcon : playIcon}
                                 alt={isPlaying ? 'Pause' : 'Play'} width={24} height={24}
                                 className="w-[24px] h-[24px] shrink-0 hover:cursor-pointer" />
                         </button>
@@ -229,7 +241,7 @@ export default function BeatsPlayer({ beats, onStateChange }: Props) {
                             className="p-2 rounded border border-zinc-700 hover:bg-zinc-800 shrink-0"
                             aria-label="Skip to next track"
                         >
-                            <Image src={forwardStepIcon} alt="Next" 
+                            <Image src={forwardStepIcon} alt="Next"
                                 width={20} height={20} className="w-[20px] h-[20px] shrink-0 hover:cursor-pointer" />
                         </button>
                     </div>
