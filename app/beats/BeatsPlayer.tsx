@@ -3,7 +3,8 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import type { Beat } from '@/lib/types'
 import Image from 'next/image'
 import { playIcon, pauseIcon, forwardStepIcon, backwardStepIcon } from '@/app/assets/images'
-import { centsToUSD, formatTime } from '@/lib/utils'
+import { formatTime } from '@/lib/utils'
+import BuyAnchor from '../components/buy-anchor'
 
 interface Props {
     beats: Beat[]
@@ -250,10 +251,7 @@ export default function BeatsPlayer({ beats, onStateChange }: Props) {
                 {/* Right section: pricing (hidden on mobile) */}
                 <div className="hidden md:block w-24 justify-self-end">
                     <div className="flex flex-col items-end">
-                        <span className="text-[10px] text-zinc-400">MP3 Lease</span>
-                        <span className="text-sm font-medium">
-                            {currentBeat ? centsToUSD(currentBeat.price_mp3_lease_cents) : '-'}
-                        </span>
+                        { currentBeat && <BuyAnchor beat={currentBeat} /> }
                     </div>
                 </div>
             </div>

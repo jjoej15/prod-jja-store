@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import { playIcon, pauseIcon } from '@/app/assets/images'
 import type { Beat } from '@/lib/types'
-import ArrowIcon from '@/app/components/arrow-icon'
+import BuyAnchor from '../components/buy-anchor'
 
 interface Props {
     beats: Beat[]
@@ -30,15 +30,7 @@ export default function BeatsList({ beats, currentId, isPlaying, onToggle }: Pro
                         </div>
                         <div className="flex items-center gap-4 text-sm flex-shrink-0 ml-4">
                             <div className="flex flex-col items-end">
-                                <a
-                                    className="group flex items-center transition-colors hover:text-neutral-600 dark:hover:text-neutral-300"
-                                    rel="noopener noreferrer"
-                                    href={`/beats/${b.id}/buy`}
-                                >
-                                    <ArrowIcon className="text-neutral-600 dark:text-neutral-300 group-hover:text-neutral-800 
-                                        dark:group-hover:text-neutral-400 transition-colors" />
-                                    <p className="ml-2 font-medium">buy</p>
-                                </a>
+                                <BuyAnchor beat={b} />
                                 <span className="text-[10px] text-zinc-500">{b.bpm} BPM</span>
                             </div>
                             <button
