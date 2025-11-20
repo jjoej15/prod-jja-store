@@ -17,6 +17,9 @@ importers:
       '@paypal/paypal-server-sdk':
         specifier: 1.0.0
         version: 1.0.0
+      '@paypal/react-paypal-js':
+        specifier: ^8.9.2
+        version: 8.9.2(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@smithy/node-http-handler':
         specifier: ^3.0.0
         version: 3.3.3
@@ -483,9 +486,21 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@paypal/paypal-js@9.0.1':
+    resolution: {integrity: sha512-6A5hkyYBSuloO7rPwnoPoy/0PPNH0pZZ1TBSTuEaSVqJ9h9t13PiP1ZarffirsO/e5t4hKjUmUORjgKV9sTMLw==}
+
   '@paypal/paypal-server-sdk@1.0.0':
     resolution: {integrity: sha512-TZACXp59whrXVbKN/8kg5Xv29VHxX5+dfCUUwwyOr4mQvBcS8eySvnnYXiik4ZvV9Pn7ClyWwlStFrCPte5Mqg==}
     engines: {node: '>=14.17.0'}
+
+  '@paypal/react-paypal-js@8.9.2':
+    resolution: {integrity: sha512-z1GoA7KAkhFCSmpIsRxe9aseXRvfOMgF6vCJ2Mym0VOSYJm8bZSC3Ui4SjONnglfV8S4P8djpe5QB7FtKsDXrQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17 || ^18 || ^19
+      react-dom: ^16.8.0 || ^17 || ^18 || ^19
+
+  '@paypal/sdk-constants@1.0.157':
+    resolution: {integrity: sha512-BjxWT9rK6dM1AOffSpvHYY47/8BY775jgEYYiwH6eL4YaqU5Epcw7zOtwQ8L4UaEn4FCAjZ2EWxaS83dCN7SpA==}
 
   '@smithy/abort-controller@3.1.9':
     resolution: {integrity: sha512-yiW0WI30zj8ZKoSYNx90no7ugVn3khlyH/z5W8qtKBtVE6awRALbhSG+2SAHA1r6bO/6M9utxYKVZ3PCJ1rWxw==}
@@ -1112,6 +1127,9 @@ packages:
   hast-util-whitespace@2.0.1:
     resolution: {integrity: sha512-nAxA0v8+vXSBDt3AnRUNjyRIQ0rD+ntpbAp4LnPkumc5M9yUbSMa4XDU9Q6etY4f1Wp4bNgvc1yjiZtsTTrSng==}
 
+  hi-base32@0.5.1:
+    resolution: {integrity: sha512-EmBBpvdYh/4XxsnUybsPag6VikPYnN30td+vQk+GI3qpahVEG9+gTkG0aXVxTjBqQ5T6ijbWIu77O+C5WFWsnA==}
+
   http-errors@2.0.0:
     resolution: {integrity: sha512-FtwrG/euBzaEjYeRqOgly7G0qviiXoJWnvEH2Z1plBdXgbyjv34pHTSb9zoeHMyDy33+DWy5Wt9Wo+TURtOYSQ==}
     engines: {node: '>= 0.8'}
@@ -1531,6 +1549,9 @@ packages:
   postgres-interval@1.2.0:
     resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
     engines: {node: '>=0.10.0'}
+
+  promise-polyfill@8.3.0:
+    resolution: {integrity: sha512-H5oELycFml5yto/atYqmjyigJoAo3+OXwolYiH7OfQuYlAqhxNvTfiNMbV9hsC6Yp83yE5r2KTVmtrG6R9i6Pg==}
 
   property-information@6.5.0:
     resolution: {integrity: sha512-PgTgs/BlvHxOu8QuEN7wi5A0OmXaBcHpmCSTehcs6Uuu9IkDIEo13Hy7n898RHfrQ49vKCoGeWZSaAK01nwVig==}
@@ -2470,6 +2491,10 @@ snapshots:
   '@next/swc-win32-x64-msvc@16.0.2-canary.17':
     optional: true
 
+  '@paypal/paypal-js@9.0.1':
+    dependencies:
+      promise-polyfill: 8.3.0
+
   '@paypal/paypal-server-sdk@1.0.0':
     dependencies:
       '@apimatic/authentication-adapters': 0.5.14
@@ -2480,6 +2505,17 @@ snapshots:
     transitivePeerDependencies:
       - debug
       - supports-color
+
+  '@paypal/react-paypal-js@8.9.2(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+    dependencies:
+      '@paypal/paypal-js': 9.0.1
+      '@paypal/sdk-constants': 1.0.157
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+
+  '@paypal/sdk-constants@1.0.157':
+    dependencies:
+      hi-base32: 0.5.1
 
   '@smithy/abort-controller@3.1.9':
     dependencies:
@@ -3187,6 +3223,8 @@ snapshots:
 
   hast-util-whitespace@2.0.1: {}
 
+  hi-base32@0.5.1: {}
+
   http-errors@2.0.0:
     dependencies:
       depd: 2.0.0
@@ -3769,6 +3807,8 @@ snapshots:
   postgres-interval@1.2.0:
     dependencies:
       xtend: 4.0.2
+
+  promise-polyfill@8.3.0: {}
 
   property-information@6.5.0: {}
 
