@@ -11,8 +11,9 @@ export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
     const [total, setTotal] = useState(centsToUSD(beatToBuy?.price_mp3_lease_cents!).replace("$", ""));
     const [isProcessing, setIsProcessing] = useState(false);
     const [paypalError, setPaypalError] = useState("");
+    const [message, setMessage] = useState("");
 
-    const createOrder = (_: any, actions: any) => {
+    const createOrder = async () => {
         const beatTitle = beatToBuy?.title;
         const descStr = purchaseType === 'mp3'
             ? `${beatTitle} MP3 Lease`
@@ -21,20 +22,36 @@ export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
                 : `${beatTitle} Exclusive`
             );
 
-        return actions.order.create({
-            purchase_units: [
-                {
-                    amount: {
-                        value: total,
-                        currency_code: 'USD'
-                    },
-                    description: descStr,
+        try {
+            const resp = await fetch("/api/payment", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
                 },
-            ],
-            return: 'minimal'
-        });
-    };
+                body: JSON.stringify({
+                    id: beatToBuy?.id,
+                    totalPrice: total,
+                    description: descStr,
+                }),
+            });
 
+            const orderData = await resp.json();
+            if (orderData.id) {
+                return orderData.id;
+            } else {
+                const errDetail = orderData?.details?.[0];
+                const errMsg = errDetail 
+                    ? `${errDetail.issue} ${errDetail.description} (${orderData.debug_id})`
+                    : JSON.stringify(orderData);
+                throw new Error(errMsg);
+            }
+
+        } catch (error) {
+            console.error(error);
+            setMessage(`Could not initiate PayPal Checkout...${error}`);
+        }
+    }
+        
 
     const onApprove = async (data: any, actions: any) => {
         setIsProcessing(true);
@@ -55,7 +72,7 @@ export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
             };
 
             // Send payment data to our API
-            const response = await fetch('/api/payment', {
+            const response = await fetch('/api/payment/capture', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
