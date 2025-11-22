@@ -3,6 +3,7 @@ import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { centsToUSD } from "@/lib/utils";
 import { useState } from "react";
 import { Beat } from '@/lib/types';
+import { error } from 'console';
 
 type PurchaseType = 'mp3' | 'wav' | 'exclusive';
 
@@ -11,7 +12,6 @@ export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
     const [total, setTotal] = useState(centsToUSD(beatToBuy?.price_mp3_lease_cents!).replace("$", ""));
     const [isProcessing, setIsProcessing] = useState(false);
     const [paypalError, setPaypalError] = useState("");
-    const [message, setMessage] = useState("");
 
     const createOrder = async () => {
         const beatTitle = beatToBuy?.title;
@@ -48,7 +48,6 @@ export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
 
         } catch (error) {
             console.error(error);
-            setMessage(`Could not initiate PayPal Checkout...${error}`);
         }
     }
         
@@ -57,43 +56,40 @@ export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
         setIsProcessing(true);
 
         try {
-            const order = await actions.order.get();
-            console.log('Payment successful', order);
-
-            // Extract payer information from PayPal response
-            const payerName = order.payer?.name?.given_name || '';
-            const payerEmail = order.payer?.email_address || '';
-
-            const paymentData = {
-                name: payerName,
-                email: payerEmail,
-                amount: total,
-                orderID: data.orderID
-            };
-
-            // Send payment data to our API
-            const response = await fetch('/api/payment/capture', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(paymentData),
+            // Send orderID to server capture endpoint
+            const response = await fetch(`/api/payment/capture`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ orderID: data.orderID })
             });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('API error response:', errorText);
-                throw new Error('Payment processing failed');
+            const orderData = await response.json();
+
+            const errorDetail = orderData?.details?.[0];
+            if (errorDetail?.issue === "INSTRUMENT_DECLINED") {
+                // (1) Recoverable INSTRUMENT_DECLINED -> call actions.restart()
+                // recoverable state, per https://developer.paypal.com/docs/checkout/standard/customize/handle-funding-failures/
+                return actions.restart();
+            } else if (errorDetail) {
+                // (2) Other non-recoverable errors -> Show a failure message
+                throw new Error(
+                  `${errorDetail.description} (${orderData.debug_id})`
+                );
+            } else {
+                // (3) Successful transaction -> Show confirmation or thank you message
+                // Or go to another URL:  actions.redirect('thank_you.html');
+                const transaction =
+                    orderData.purchase_units[0].payments.captures[0];
+                console.log(
+                    "Capture result",
+                    orderData,
+                    JSON.stringify(orderData, null, 2)
+                );
             }
 
-            const result = await response.json();
-            console.log('API response:', result);
-            alert('Payment processed successfully!');
-
         } catch (error) {
-            console.error('Payment failed:', error);
-            setPaypalError('Payment failed. Please try again.');
-
+            console.error('Approve/capture error:', error);
+        
         } finally {
             setIsProcessing(false);
         }
@@ -108,10 +104,10 @@ export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
 
     return(
         <div className="card bg-white rounded-lg shadow p-6">
-            <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
+            {/* <h2 className="text-2xl text-gray-500 font-bold mb-6">Order Summary</h2> */}
             {/* Processing State */}
             {isProcessing && (
-                <div className="mb-4 text-center">
+                <div className="mb-4 text-center text-gray-500">
                     <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 mr-2"></div>
                     <span>Processing your payment...</span>
                 </div>

@@ -6,7 +6,8 @@ export default async function BuyBeat({ params }) {
 
 	return (
 		<div className="container mx-auto max-w-md p-4">
-			<BuyClient beatToBuy={beatToBuy} />
+			{!beatToBuy ? <p className="text-sm text-zinc-500">invalid beat id.</p> 
+				: <BuyClient beatToBuy={beatToBuy} />}
 		</div>
 	);
 }
