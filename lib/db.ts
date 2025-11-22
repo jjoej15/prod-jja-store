@@ -33,19 +33,27 @@ export const getCachedBeats = cache(async (): Promise<Beat[]> => {
 })
 
 export async function getBeatById(id: string): Promise<Beat | null> {
-    const res = await pool.query<Beat>(
-        'SELECT id, title, artists, beat_key, bpm, s3_key_mp3, '
-        + 's3_key_wav, price_mp3_lease_cents, price_wav_lease_cents, '
-        + 'price_exclusive_cents, created_at FROM beats WHERE id = $1 LIMIT 1',
-        [id]
-    )
+    try {
+        const trimId = id.trim();
 
-    if (res.rowCount === 0) return null
+        const res = await pool.query<Beat>(
+            'SELECT id, title, artists, beat_key, bpm, s3_key_mp3, '
+            + 's3_key_wav, price_mp3_lease_cents, price_wav_lease_cents, '
+            + 'price_exclusive_cents, created_at FROM beats WHERE id = $1 LIMIT 1',
+            [trimId]
+        );
 
-    const r = res.rows[0] as any
-    return {
-        ...(res.rows[0] as Beat),
-        created_at: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
+        if (res.rowCount === 0) return null
+
+        const r = res.rows[0] as any
+        return {
+            ...(res.rows[0] as Beat),
+            created_at: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
+        }
+
+    } catch (error) {
+        console.error('Error fetching beat by ID:', error);
+        return null;
     }
 }
 
