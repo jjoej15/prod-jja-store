@@ -1,89 +1,73 @@
+import { ordersController } from '@/lib/paypal'
+import { ApiError } from '@paypal/paypal-server-sdk';
+import { NextResponse } from 'next/server';
+
 interface PaymentData {
-    name: string;
-    email: string;
-    amount: string;
     orderID: string;
+    // Optional future fields:
+    name?: string;
+    email?: string;
+    amount?: string;
 }
 
-async function capturePayPalOrder(orderID: string, accessToken: string) {
+/**
+ * Capture payment for the created order to complete the transaction.
+ * @see https://developer.paypal.com/docs/api/orders/v2/#orders_capture
+ */
+async function capturePayPalOrder(orderID: string) {
+    const collect = {
+        id: orderID,
+        prefer: "return=minimal",
+    }
+
     try {
-        console.log(`Capturing order ${orderID} with token ${accessToken.substring(0, 10)}...`);
+        console.log(`Capturing order ${orderID}`);
 
-        const response = await fetch(`${PAYPAL_API_URL}/v2/checkout/orders/${orderID}/capture`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({}),
-        });
-
-        const data = await response.json();
-        console.log('Capture response:', data);
-        return data;
+        const { body, ...httpResponse } = await ordersController.captureOrder(collect);
+        let parsed: any = {};
+        if (body && (body as string).length > 0) {
+            try {
+                parsed = JSON.parse(body as string);
+            } catch (e) {
+                console.warn('Failed to parse PayPal capture body, returning raw string');
+                parsed = { raw: body };
+            }
+        }
+        return {
+            jsonResponse: parsed,
+            httpStatusCode: httpResponse.statusCode,
+        };
 
     } catch (error) {
-        console.error('Error capturing PayPal order:', error);
-        throw error;
+        if (error instanceof ApiError) {
+            throw new Error(error.message);
+        }
     }
 }
 
 
 export async function POST(request: Request) {
     try {
-        const data: PaymentData = await request.json();
-        console.log('Received payment data:', data);
+        const raw = await request.text();
+        if (!raw) {
+            return NextResponse.json({ error: 'Empty request body' }, { status: 400 });
+        }
+        let data: PaymentData;
 
-        // Validate the payment data
-        if (!(data.name && data.email && data.amount && data.orderID)) {
-            return NextResponse.json(
-                { error: 'Missing required fields' },
-                { status: 400 }
-            );
+        try {
+            data = JSON.parse(raw);
+        } catch (e) {
+            return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+        }
+        if (!data.orderID) {
+            return NextResponse.json({ error: 'Missing orderID' }, { status: 400 });
         }
 
-        // Capture the payment
-        const captureData = await capturePayPalOrder(data.orderID, accessToken);
-        console.log('PayPal capture response:', captureData);
+        const captureData = await capturePayPalOrder(data.orderID);
 
-        // Check if capture was successful
-        if (captureData.status !== 'COMPLETED') {
-            console.log(`Invalid capture status: ${captureData.status}`);
-            return NextResponse.json(
-                { error: `Payment capture failed with status: ${captureData.status}` },
-                { status: 400 }
-            );
-        }
+        return NextResponse.json(captureData!.jsonResponse, { status: captureData!.httpStatusCode });
 
-        return NextResponse.json(
-            {
-                success: true,
-                message: 'Payment captured successfully',
-                data: {
-                    name: data.name,
-                    email: data.email,
-                    amount: data.amount,
-                    orderID: data.orderID,
-                    captureID: captureData.id,
-                    captureStatus: captureData.status
-                }
-            },
-            { status: 200 }
-        );
-        
     } catch (error) {
-        console.error('Payment processing error:', error);
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: 'Failed to capture order.' }, { status: 500 });
     }
-}
-
-
-export async function GET() {
-    return NextResponse.json(
-        { message: 'Payment API endpoint' },
-        { status: 200 }
-    );
 }
