@@ -67,7 +67,7 @@ const createOrderInDbFromCapture = async (
         created_at: capture.create_time,
         beat_id: paymentData.beatId,
         status: jsonResp.status,
-        purchase_type: "mp3",
+        purchase_type: paymentData.purchaseType,
         gross_amount: amounts.gross_amount.value,
         paypal_fee: amounts.paypal_fee.value,
         net_amount: amounts.net_amount.value,
