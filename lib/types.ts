@@ -24,7 +24,9 @@ export interface Order {
     beat_id: string;
     status: string;
     purchase_type: PurchaseType;
-    amount_cents: number;
+    gross_amount: string;
+    paypal_fee: string;
+    net_amount: string;
     currency: string;
     payer_email: string;
     recipient_email: string;

@@ -64,16 +64,18 @@ export const getCachedBeatById = cache(async (id: string): Promise<Beat | null> 
 export const createOrder = async (order: Order) => {
     const res = await pool.query<Order>(
         `INSERT INTO orders 
-        (order_id, created_at, beat_id, status, purchase_type, amount_cents, currency, payer_email, recipient_email)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING order_id, created_at, beat_id, status, purchase_type, amount_cents, currency, payer_email, recipient_email`,
+        (order_id, created_at, beat_id, status, purchase_type, gross_amount, paypal_fee, net_amount, currency, payer_email, recipient_email)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        RETURNING order_id, created_at, beat_id, status, purchase_type, gross_amount, paypal_fee, net_amount, currency, payer_email, recipient_email`,
         [
             order.order_id,
             order.created_at,
             order.beat_id,
             order.status,
             order.purchase_type,
-            order.amount_cents,
+            order.gross_amount,
+            order.paypal_fee,
+            order.net_amount,
             order.currency,
             order.payer_email,
             order.recipient_email
