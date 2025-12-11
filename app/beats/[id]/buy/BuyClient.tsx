@@ -2,14 +2,12 @@
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { centsToUSD } from "@/lib/utils";
 import { useState } from "react";
-import { Beat } from '@/lib/types';
-import { error } from 'console';
-
-type PurchaseType = 'mp3' | 'wav' | 'exclusive';
+import { Beat, PurchaseType } from '@/lib/types';
 
 export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
     const [purchaseType, setPurchaseType] = useState<PurchaseType>("mp3");
     const [total, setTotal] = useState(centsToUSD(beatToBuy?.price_mp3_lease_cents!).replace("$", ""));
+    const [totalCents, setTotalCents] = useState(beatToBuy?.price_mp3_lease_cents!);
     const [isProcessing, setIsProcessing] = useState(false);
     const [paypalError, setPaypalError] = useState("");
 
@@ -60,12 +58,18 @@ export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
             const response = await fetch(`/api/payment/capture`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ orderID: data.orderID })
+                body: JSON.stringify({ 
+                    orderID: data.orderID,
+                    beatId: beatToBuy?.id,
+                    purchaseType,
+                    recipientEmail: "test@example.com"
+                }),
             });
 
             const orderData = await response.json();
+            // const order = orderData?.order;
+            const errorDetail = orderData?.errDetail;
 
-            const errorDetail = orderData?.details?.[0];
             if (errorDetail?.issue === "INSTRUMENT_DECLINED") {
                 // (1) Recoverable INSTRUMENT_DECLINED -> call actions.restart()
                 // recoverable state, per https://developer.paypal.com/docs/checkout/standard/customize/handle-funding-failures/
@@ -78,13 +82,14 @@ export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
             } else {
                 // (3) Successful transaction -> Show confirmation or thank you message
                 // Or go to another URL:  actions.redirect('thank_you.html');
-                const transaction =
-                    orderData.purchase_units[0].payments.captures[0];
-                console.log(
-                    "Capture result",
-                    orderData,
-                    JSON.stringify(orderData, null, 2)
-                );
+                // const transaction =
+                //     orderData.purchase_units[0].payments.captures[0];
+                // console.log(
+                //     "Capture result",
+                //     orderData,
+                //     JSON.stringify(orderData, null, 2)
+                // );
+                console.log('order success');
             }
 
         } catch (error) {

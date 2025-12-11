@@ -61,7 +61,7 @@ export const getCachedBeatById = cache(async (id: string): Promise<Beat | null> 
     return await getBeatById(id);
 });
 
-export const createOrder = async (order: Order) => {
+export const createOrder = async (order: Order): Promise<Order> => {
     const res = await pool.query<Order>(
         `INSERT INTO orders 
         (order_id, created_at, beat_id, status, purchase_type, gross_amount, paypal_fee, net_amount, currency, payer_email, recipient_email)
