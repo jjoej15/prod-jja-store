@@ -1,5 +1,5 @@
 import { Pool } from 'pg'
-import type { Beat } from './types'
+import type { Beat, Order } from './types'
 import { cache } from 'react'
 
 // Reuse a single pool across hot reloads in dev.
@@ -60,3 +60,25 @@ export async function getBeatById(id: string): Promise<Beat | null> {
 export const getCachedBeatById = cache(async (id: string): Promise<Beat | null> => {
     return await getBeatById(id);
 });
+
+export const createOrder = async (order: Order) => {
+    const res = await pool.query<Order>(
+        `INSERT INTO orders 
+        (order_id, created_at, beat_id, status, purchase_type, amount_cents, currency, payer_email, recipient_email)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING order_id, created_at, beat_id, status, purchase_type, amount_cents, currency, payer_email, recipient_email`,
+        [
+            order.order_id,
+            order.created_at,
+            order.beat_id,
+            order.status,
+            order.purchase_type,
+            order.amount_cents,
+            order.currency,
+            order.payer_email,
+            order.recipient_email
+        ]
+    );
+
+    return res.rows[0];
+}
