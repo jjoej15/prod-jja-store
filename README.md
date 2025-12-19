@@ -1,4 +1,4 @@
-# jj.aholics/Joe Anderson beat store (work in progress)
+# Joe Anderson beat store (work in progress)
 
 ## Tech stack
 - Next.js app router framework w/ TypeScript and Node.js
