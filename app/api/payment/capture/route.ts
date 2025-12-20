@@ -3,12 +3,13 @@ import { ApiError } from '@paypal/paypal-server-sdk';
 import { NextResponse } from 'next/server';
 import { createOrder } from '@/lib/db';
 import { Order, PurchaseType } from '@/lib/types';
+import { createOrderToken } from '@/lib/order-token';
 
 interface PaymentData {
     orderID: string;
     beatId: string;
     purchaseType: PurchaseType;
-    recipient_email?: string;
+    recipientEmail?: string;
 }
 
 /**
@@ -21,7 +22,7 @@ async function capturePayPalOrder(orderID: string): Promise<{
 } | undefined> {
     const collect = {
         id: orderID,
-        prefer: "return=minimal",
+        prefer: "return=representation",
     }
 
     try {
@@ -58,6 +59,9 @@ const createOrderInDbFromCapture = async (
     paymentData: PaymentData
 ): Promise<Order> => {
     const jsonResp = captureData?.jsonResponse;
+    if (!jsonResp?.purchase_units?.[0]?.payments?.captures?.[0]) {
+        throw new Error('PayPal capture response missing capture details');
+    }
     const capture = jsonResp.purchase_units[0].payments.captures[0];
     const payer_email = jsonResp.payer.email_address;
     const amounts = capture.seller_receivable_breakdown;
@@ -73,7 +77,7 @@ const createOrderInDbFromCapture = async (
         net_amount: amounts.net_amount.value,
         currency: capture.amount.currency_code,
         payer_email: payer_email,
-        recipient_email: paymentData?.recipient_email || payer_email,
+        recipient_email: paymentData?.recipientEmail || payer_email,
     });
 
     return order;
@@ -96,12 +100,19 @@ export async function POST(request: Request) {
         if (!data.orderID) {
             return NextResponse.json({ error: 'Missing orderID' }, { status: 400 });
         }
+        if (!data.beatId) {
+            return NextResponse.json({ error: 'Missing beatId' }, { status: 400 });
+        }
 
         const captureData = await capturePayPalOrder(data.orderID);
         const order = await createOrderInDbFromCapture(captureData, data);
 
+        const token = createOrderToken({ orderId: data.orderID, beatId: data.beatId });
+
         return NextResponse.json({
+            ok: true,
             order: order,
+            token,
             errDetail: captureData?.jsonResponse.details?.[0]
         },
             { status: captureData!.httpStatusCode }

@@ -3,11 +3,14 @@ import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { centsToUSD } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { Beat, PurchaseType } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 
 export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
+    const router = useRouter();
     const [purchaseType, setPurchaseType] = useState<PurchaseType>("mp3");
     const [isProcessing, setIsProcessing] = useState(false);
     const [paypalError, setPaypalError] = useState("");
+    const [recipientEmail, setRecipientEmail] = useState("");
 
     const totalCents = useMemo(() => {
         if (!beatToBuy) return 0;
@@ -84,12 +87,11 @@ export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
                     orderID: data.orderID,
                     beatId: beatToBuy?.id,
                     purchaseType,
-                    recipientEmail: "test@example.com"
+                    recipientEmail,
                 }),
             });
 
             const orderData = await response.json();
-            // const order = orderData?.order;
             const errorDetail = orderData?.errDetail;
 
             if (errorDetail?.issue === "INSTRUMENT_DECLINED") {
@@ -104,18 +106,18 @@ export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
             } else {
                 // (3) Successful transaction -> Show confirmation or thank you message
                 // Or go to another URL:  actions.redirect('thank_you.html');
-                // const transaction =
-                //     orderData.purchase_units[0].payments.captures[0];
-                // console.log(
-                //     "Capture result",
-                //     orderData,
-                //     JSON.stringify(orderData, null, 2)
-                // );
-                console.log('order success');
+                const token = orderData?.token;
+                const orderId = orderData?.order?.order_id ?? data.orderID;
+                if (!token || !orderId || !beatToBuy?.id) {
+                    throw new Error('Missing token/orderId in capture response');
+                }
+
+                router.replace(`/beats/${beatToBuy.id}/buy/success?orderId=${encodeURIComponent(orderId)}&token=${encodeURIComponent(token)}`);
             }
 
         } catch (error) {
             console.error('Approve/capture error:', error);
+            setPaypalError('Payment failed. Please try again.');
 
         } finally {
             setIsProcessing(false);
@@ -206,7 +208,7 @@ export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
                         </PayPalScriptProvider>
 
                         <p className="text-xs text-zinc-500 text-center mt-4">
-                            By completing this purchase, you agree to our terms and conditions.
+                            Download link for track will be sent to email associated with PayPal account upon completing purchase
                         </p>
                     </div>
                 </div>

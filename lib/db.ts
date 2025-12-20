@@ -84,3 +84,20 @@ export const createOrder = async (order: Order): Promise<Order> => {
 
     return res.rows[0];
 }
+
+export async function getOrderById(orderId: string): Promise<Order | null> {
+    try {
+        const trimmed = orderId.trim();
+        const res = await pool.query<Order>(
+            'SELECT order_id, created_at, beat_id, status, purchase_type, gross_amount, paypal_fee, net_amount, currency, payer_email, recipient_email '
+            + 'FROM orders WHERE order_id = $1 LIMIT 1',
+            [trimmed]
+        );
+
+        if (res.rowCount === 0) return null;
+        return res.rows[0];
+    } catch (error) {
+        console.error('Error fetching order by ID:', error);
+        return null;
+    }
+}
