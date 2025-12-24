@@ -19,7 +19,7 @@ const requestHandler = new NodeHttpHandler({
 
 // Reuse client across hot reloads (Next.js dev) to avoid creating many pools.
 const globalForS3 = global as unknown as { s3Client?: S3Client };
-export const s3: S3Client = globalForS3.s3Client 
+export const s3: S3Client = globalForS3.s3Client
     || new S3Client({ region, requestHandler });
 
 if (!globalForS3.s3Client) {
@@ -35,6 +35,16 @@ export async function getPreviewUrl(key: string): Promise<string> {
     const expires = parseInt(process.env.PRESIGN_EXPIRY_SECONDS || '300', 10);
     const cmd = new GetObjectCommand({ Bucket: bucket, Key: key });
     return getSignedUrl(s3, cmd, { expiresIn: expires });
+}
+
+export async function getDownloadUrl(key: string, expiresInSeconds = 60 * 60 * 24): Promise<string> {
+    const bucket = process.env.S3_BUCKET;
+    if (!bucket) {
+        throw new Error('S3_BUCKET env var missing');
+    }
+
+    const cmd = new GetObjectCommand({ Bucket: bucket, Key: key });
+    return getSignedUrl(s3, cmd, { expiresIn: expiresInSeconds });
 }
 
 
