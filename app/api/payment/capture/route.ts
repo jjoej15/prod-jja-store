@@ -1,9 +1,12 @@
 import { ordersController } from '@/lib/paypal'
 import { ApiError } from '@paypal/paypal-server-sdk';
 import { NextResponse } from 'next/server';
-import { createOrder } from '@/lib/db';
+import { createOrder, getBeatById } from '@/lib/db';
 import { Order, PurchaseType } from '@/lib/types';
 import { createOrderToken } from '@/lib/order-token';
+import { getDownloadUrl } from '@/lib/s3';
+import { generateMp3LeaseContractPdf } from '@/lib/contracts/mp3-lease';
+import { sendEmail } from '@/lib/email';
 
 interface PaymentData {
     orderID: string;
@@ -109,11 +112,78 @@ export async function POST(request: Request) {
 
         const token = createOrderToken({ orderId: data.orderID, beatId: data.beatId });
 
+        let contractEmailSent = false;
+        let contractEmailError: string | undefined;
+
+        try {
+            const jsonResp = captureData?.jsonResponse;
+            const capture = jsonResp?.purchase_units?.[0]?.payments?.captures?.[0];
+            const payerEmail: string | undefined = jsonResp?.payer?.email_address;
+
+            const isCompleted = jsonResp?.status === 'COMPLETED';
+            const isMp3Lease = data.purchaseType === 'mp3';
+
+            if (isCompleted && isMp3Lease && payerEmail && capture?.id) {
+                const beat = await getBeatById(data.beatId);
+                if (!beat) {
+                    throw new Error(`Beat not found for id=${data.beatId}`);
+                }
+
+                const downloadUrl = await getDownloadUrl(beat.s3_key_mp3, 60 * 60 * 24);
+
+                const payerName = [jsonResp?.payer?.name?.given_name, jsonResp?.payer?.name?.surname]
+                    .filter(Boolean)
+                    .join(' ')
+                    || 'Customer';
+
+                const createdAt = capture?.create_time ? new Date(capture.create_time) : new Date();
+                const contractDate = createdAt.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                });
+
+                const { pdf, filename } = await generateMp3LeaseContractPdf({
+                    orderNumber: order.order_id,
+                    contractDate,
+                    trackName: beat.title,
+                    customerFullName: payerName,
+                    customerEmail: payerEmail,
+                    mp3LeasePriceInDollars: order.gross_amount,
+                    purchaseCode: capture.id,
+                    trackId: beat.id,
+                });
+
+                await sendEmail({
+                    to: payerEmail,
+                    subject: `jj.aholics - ${beat.title}: MP3 Lease Contract`,
+                    text:
+                        `Thanks for your purchase!\n\n`
+                        + `Attached is your MP3 lease contract (PDF).\n\n`
+                        + `Your download link (valid for 24 hours):\n${downloadUrl}\n\n`
+                        + `Order: ${order.order_id}\n`
+                        + `Beat: ${beat.title}\n`,
+                    attachments: [{
+                        filename,
+                        content: pdf,
+                        contentType: 'application/pdf',
+                    }],
+                });
+
+                contractEmailSent = true;
+            }
+        } catch (e) {
+            contractEmailError = e instanceof Error ? e.message : String(e);
+            console.error('Failed to generate/send MP3 lease contract:', e);
+        }
+
         return NextResponse.json({
             ok: true,
             order: order,
             token,
-            errDetail: captureData?.jsonResponse.details?.[0]
+            errDetail: captureData?.jsonResponse.details?.[0],
+            contractEmailSent,
+            contractEmailError,
         },
             { status: captureData!.httpStatusCode }
         );
