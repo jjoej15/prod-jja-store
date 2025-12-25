@@ -11,9 +11,9 @@ function buildContractLines(input: ContractInput): string[] {
         '',
         'Master Use. The Licensor hereby grants to Licensee a non-exclusive license (this "License") to record vocal synchronization to the Composition partly or in its entirety and substantially in its original form ("Master Recording").',
         '',
-        `Mechanical Rights. The Licensor hereby grants to Licensee a non-exclusive license to use Master Recording in the reproduction, duplication, manufacture, and distribution of phonograph records, cassette tapes, compact disk, digital downloads, other miscellaneous audio and digital recordings, and any lifts and versions thereof (collectively, the "Recordings", and individually, a "Recordings") worldwide for up to the pressing or selling a total of Two Thousand Five Hundred (2500) copies of such Recordings or any combination of such Recordings, condition upon the payment to the Licensor a sum of $${input.priceInDollars}, receipt of which is confirmed. This license allows up to Five Thousand (5000) monetized audio streams to sites like (Spotify, RDIO, Rhapsody) but not eligible for monetization on YouTube.`,
+        `Mechanical Rights. The Licensor hereby grants to Licensee a non-exclusive license to use Master Recording in the reproduction, duplication, manufacture, and distribution of phonograph records, cassette tapes, compact disk, digital downloads, other miscellaneous audio and digital recordings, and any lifts and versions thereof (collectively, the "Recordings", and individually, a "Recordings") worldwide for up to the pressing or selling a total of Unlimited copies of such Recordings or any combination of such Recordings, condition upon the payment to the Licensor a sum of $${input.priceInDollars}, receipt of which is confirmed. This license allows Unlimited monetized audio streams to sites like (Spotify, RDIO, Rhapsody) but not eligible for monetization on YouTube.`,
         '',
-        'Performance Rights. The Licensor here by grants to Licensee a non-exclusive license to use the Master Recording in Unlimited non-profit and 10 for-profit performances, shows, or concerts.',
+        'Performance Rights. The Licensor here by grants to Licensee a non-exclusive license to use the Master Recording in Unlimited non-profit and 200 for-profit performances, shows, or concerts.',
         '',
         'Synchronization Rights. The Licensor hereby grants limited synchronization rights for One (1) music video streamed online (Youtube, Vimeo, etc..) for up to 5000 monetized video streams on all total sites. A separate synchronization license will need to be purchased for distribution of video to Television, Film or Video game.',
         '',
@@ -28,6 +28,8 @@ function buildContractLines(input: ContractInput): string[] {
         'Audio Samples. 3rd party sample clearance is the responsibility of the licensee.',
         '',
         'Miscellaneous. This license is non-transferable and is limited to the Composition specified above, constitutes the entire agreement between the Licensor and the Licensee relating to the Composition, and shall be binding upon both the Licensor and the Licensee and their respective successors, assigns, and legal representatives.',
+        `- ${input.customerFullName}, owns 80% of the writers share.`,
+        `- Joseph Anderson, owns 20% of the writers share.`,
         '',
         'Term. Executed by the Licensor and the Licensee, to be effective as for all purposes as of the Effective Date first mentioned above and shall terminate exactly ten (10) years from this date.',
         '',
@@ -36,13 +38,13 @@ function buildContractLines(input: ContractInput): string[] {
     ];
 }
 
-export async function generateMp3LeaseContractPdf(input: ContractInput): Promise<{ pdf: Buffer; filename: string }> {
+export async function generateExclusiveContractPdf(input: ContractInput): Promise<{ pdf: Buffer; filename: string }> {
     const safeTrack = input.trackName.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60) || 'track';
-    const filename = `jjaholics-${safeTrack}-mp3-lease.pdf`;
+    const filename = `jjaholics-${safeTrack}-exclusive.pdf`;
 
     const pdf = await renderSimpleTextContractPdf({
-        pdfTitle: `jj.aholics - ${input.trackName}: MP3 Lease Contract`,
-        headerTitle: `jj.aholics - ${input.trackName}: Non Exclusive`,
+        pdfTitle: `jj.aholics - ${input.trackName}: Exclusive Contract`,
+        headerTitle: `jj.aholics - ${input.trackName}: Exclusive`,
         headerSubtitle: `License Agreement For Order #${input.orderNumber}`,
         lines: buildContractLines(input),
     });

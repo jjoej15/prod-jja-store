@@ -5,7 +5,7 @@ import { createOrder, getBeatById } from '@/lib/db';
 import { Order, PurchaseType } from '@/lib/types';
 import { createOrderToken } from '@/lib/order-token';
 import { getDownloadUrl } from '@/lib/s3';
-import { generateMp3LeaseContractPdf } from '@/lib/contracts/mp3-lease';
+import { generateContractPdf, getContractEmailBody, getContractEmailSubject, getDownloadKeyForPurchaseType } from '@/lib/contracts';
 import { sendEmail } from '@/lib/email';
 
 interface PaymentData {
@@ -121,15 +121,15 @@ export async function POST(request: Request) {
             const payerEmail: string | undefined = jsonResp?.payer?.email_address;
 
             const isCompleted = jsonResp?.status === 'COMPLETED';
-            const isMp3Lease = data.purchaseType === 'mp3';
 
-            if (isCompleted && isMp3Lease && payerEmail && capture?.id) {
+            if (isCompleted && payerEmail && capture?.id) {
                 const beat = await getBeatById(data.beatId);
                 if (!beat) {
                     throw new Error(`Beat not found for id=${data.beatId}`);
                 }
 
-                const downloadUrl = await getDownloadUrl(beat.s3_key_mp3, 60 * 60 * 24);
+                const downloadKey = getDownloadKeyForPurchaseType(beat, data.purchaseType);
+                const downloadUrl = await getDownloadUrl(downloadKey, 60 * 60 * 24);
 
                 const payerName = [jsonResp?.payer?.name?.given_name, jsonResp?.payer?.name?.surname]
                     .filter(Boolean)
@@ -143,26 +143,26 @@ export async function POST(request: Request) {
                     day: 'numeric',
                 });
 
-                const { pdf, filename } = await generateMp3LeaseContractPdf({
+                const { pdf, filename } = await generateContractPdf(data.purchaseType, {
                     orderNumber: order.order_id,
                     contractDate,
                     trackName: beat.title,
                     customerFullName: payerName,
                     customerEmail: payerEmail,
-                    mp3LeasePriceInDollars: order.gross_amount,
+                    priceInDollars: order.gross_amount,
                     purchaseCode: capture.id,
                     trackId: beat.id,
                 });
 
                 await sendEmail({
                     to: payerEmail,
-                    subject: `jj.aholics - ${beat.title}: MP3 Lease Contract`,
-                    text:
-                        `thanks for your purchase!\n\n`
-                        + `attached is your mp3 lease contract.\n\n`
-                        + `your download link (valid for 24 hours):\n${downloadUrl}\n\n`
-                        + `order: ${order.order_id}\n`
-                        + `beat: ${beat.title}\n`,
+                    subject: getContractEmailSubject(data.purchaseType, beat.title),
+                    text: getContractEmailBody({
+                        purchaseType: data.purchaseType,
+                        downloadUrl,
+                        orderNumber: order.order_id,
+                        trackTitle: beat.title,
+                    }),
                     attachments: [{
                         filename,
                         content: pdf,

@@ -31,3 +31,14 @@ export interface Order {
     payer_email: string;
     recipient_email: string;
 }
+
+export interface ContractInput {
+    orderNumber: string;
+    contractDate: string;
+    trackName: string;
+    customerFullName: string;
+    customerEmail: string;
+    priceInDollars: string;
+    purchaseCode: string;
+    trackId: string;
+}
