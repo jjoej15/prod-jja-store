@@ -12,8 +12,6 @@ export interface Mp3LeaseContractInput {
 }
 
 function buildContractLines(input: Mp3LeaseContractInput): string[] {
-    // Mirrors the content/meaning of lease-templates/mp3-lease-contract.tex,
-    // but rendered as plain text into a PDF.
     return [
         `jj.aholics - ${input.trackName}: Non Exclusive`,
         `License Agreement For Order #${input.orderNumber}`,

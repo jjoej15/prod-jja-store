@@ -158,11 +158,11 @@ export async function POST(request: Request) {
                     to: payerEmail,
                     subject: `jj.aholics - ${beat.title}: MP3 Lease Contract`,
                     text:
-                        `Thanks for your purchase!\n\n`
-                        + `Attached is your MP3 lease contract (PDF).\n\n`
-                        + `Your download link (valid for 24 hours):\n${downloadUrl}\n\n`
-                        + `Order: ${order.order_id}\n`
-                        + `Beat: ${beat.title}\n`,
+                        `thanks for your purchase!\n\n`
+                        + `attached is your mp3 lease contract.\n\n`
+                        + `your download link (valid for 24 hours):\n${downloadUrl}\n\n`
+                        + `order: ${order.order_id}\n`
+                        + `beat: ${beat.title}\n`,
                     attachments: [{
                         filename,
                         content: pdf,
