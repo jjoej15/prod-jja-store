@@ -44,7 +44,7 @@ export default function BeatsList({ beats, currentId, isPlaying, onToggle }: Pro
                                     alt={playing ? `Pause ${b.title}` : `Play ${b.title}`}
                                     width={24}
                                     height={24}
-                                    className="w-6 h-6 hover:cursor-pointer transition group-hover:brightness-75"
+                                    className="w-6 h-6 hover:cursor-pointer transition group-hover:brightness-75 invert dark:invert-0"
                                 />
                             </button>
                         </div>
