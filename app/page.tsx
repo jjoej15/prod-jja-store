@@ -5,7 +5,7 @@ export default function Page() {
         joe anderson beat store
       </h1>
       <p className="mb-4">
-        {`Work in progress`}
+        {`all compositions produced by joe anderson. for beat stems or other inquiries, email me @ joejanderson03@gmail.com.`}
       </p>
     </section>
   )
