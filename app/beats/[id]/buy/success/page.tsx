@@ -33,8 +33,8 @@ export default async function BuySuccessPage({
 
     return (
         <div className="container mx-auto max-w-md p-4">
-            <h1 className="text-xl font-semibold text-zinc-100">thank you</h1>
-            <p className="mt-2 text-sm text-zinc-400">
+            <h1 className="text-xl font-semibold text-black dark:text-zinc-100">thank you</h1>
+            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
                 your purchase was completed successfully.
                 please check your email for a download link. link will expire in 24 hours.
             </p>
