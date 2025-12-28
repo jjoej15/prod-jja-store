@@ -1,5 +1,10 @@
 import { getCachedBeatById } from "@/lib/db";
 import BuyClient from "./BuyClient";
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+    title: 'buy',
+}
 
 export default async function BuyBeat({ params }) {
 	const beatToBuy = await getCachedBeatById((await params).id);

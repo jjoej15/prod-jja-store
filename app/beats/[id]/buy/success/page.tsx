@@ -1,5 +1,10 @@
 import { getOrderById } from "@/lib/db";
 import { verifyOrderToken } from "@/lib/order-token";
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+    title: 'success',
+}
 
 export const dynamic = "force-dynamic";
 

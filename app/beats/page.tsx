@@ -1,6 +1,11 @@
 import type { Beat } from '@/lib/types'
 import { listBeats } from '@/lib/db'
 import BeatsClient from './BeatsClient'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+    title: 'beats',
+}
 
 export default async function Page() {
     try {
