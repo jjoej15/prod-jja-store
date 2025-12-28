@@ -1,9 +1,24 @@
 import { Client, Environment, LogLevel, OrdersController } from '@paypal/paypal-server-sdk'
 
+const IS_PRODUCTION = process.env.NEXT_PUBLIC_ENVIRONMENT === 'PRODUCTION'
+
 // Compute API base URL for fallback fetch calls
-export const PAYPAL_API_URL = process.env.ENVIRONMENT === 'PRODUCTION'
+const PAYPAL_API_URL = IS_PRODUCTION
     ? 'https://api-m.paypal.com'
     : 'https://api-m.sandbox.paypal.com'
+
+const PAYPAL_CLIENT_ID = IS_PRODUCTION 
+    ? process.env.NEXT_PUBLIC_PROD_PAYPAL_CLIENT_ID ?? "" 
+    : process.env.NEXT_PUBLIC_SANDBOX_PAYPAL_CLIENT_ID ?? "";
+
+const PAYPAL_CLIENT_SECRET = IS_PRODUCTION 
+    ? process.env.PROD_PAYPAL_CLIENT_SECRET ?? ""
+    : process.env.SANDBOX_PAYPAL_CLIENT_SECRET ?? "";
+
+if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+    console.log('Missing PayPal credentials:', { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET });
+    throw new Error('Missing PayPal client ID or secret in environment variables');
+}
 
 type GlobalPaypal = {
     paypalClient?: Client
@@ -15,17 +30,18 @@ const globalForPaypal = global as unknown as GlobalPaypal
 export const paypalClient: Client =
     globalForPaypal.paypalClient || new Client({
         clientCredentialsAuthCredentials: {
-            oAuthClientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? '',
-            oAuthClientSecret: process.env.PAYPAL_CLIENT_SECRET ?? '',
+            oAuthClientId: PAYPAL_CLIENT_ID,
+            oAuthClientSecret: PAYPAL_CLIENT_SECRET,
         },
         timeout: 0,
-        environment: process.env.ENVIRONMENT === 'PRODUCTION'
+        environment: IS_PRODUCTION
             ? Environment.Production
             : Environment.Sandbox,
         logging: {
-            logLevel: LogLevel.Info,
-            logRequest: { logBody: true },
-            logResponse: { logHeaders: true },
+            logLevel: IS_PRODUCTION ? LogLevel.Warn : LogLevel.Info,
+            maskSensitiveHeaders: true,
+            logRequest: IS_PRODUCTION ? { logBody: false, logHeaders: false } : { logBody: true, logHeaders: false },
+            logResponse: IS_PRODUCTION ? { logBody: false, logHeaders: false } : { logBody: false, logHeaders: true },
         },
     });
 
@@ -41,8 +57,8 @@ if (!globalForPaypal.ordersController) {
 
 
 export async function getPayPalAccessToken(): Promise<string> {
-    const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || ''
-    const clientSecret = process.env.PAYPAL_CLIENT_SECRET || ''
+    const clientId = PAYPAL_CLIENT_ID
+    const clientSecret = PAYPAL_CLIENT_SECRET
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
 
     const resp = await fetch(`${PAYPAL_API_URL}/v1/oauth2/token`, {

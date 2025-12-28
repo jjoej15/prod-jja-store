@@ -29,26 +29,37 @@ const createOrder = async (orderData: OrderData) => {
         prefer: "return=minimal",
     };
 
-    try {
-        const { body, ...httpResponse } = await ordersController.createOrder(
-            collect
-        );
+    const { body, ...httpResponse } = await ordersController.createOrder(collect);
 
-        return {
-            jsonResponse: JSON.parse(body as string),
-            httpStatusCode: httpResponse.statusCode,
-        };
-
-    } catch (error) {
-        if (error instanceof ApiError) {
-            throw new Error(error.message);
+    let parsed: any = {};
+    if (body && (body as string).length > 0) {
+        try {
+            parsed = JSON.parse(body as string);
+        } catch {
+            parsed = { raw: body };
         }
     }
+
+    return {
+        jsonResponse: parsed,
+        httpStatusCode: httpResponse.statusCode,
+    };
 }
 
 export async function POST(request: Request) {
     try {
-        const data: OrderData = await request.json();
+        const raw = await request.text();
+        if (!raw) {
+            return NextResponse.json({ error: 'Empty request body' }, { status: 400 });
+        }
+
+        let data: OrderData;
+        try {
+            data = JSON.parse(raw);
+        } catch {
+            return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+        }
+
         console.log('Received order data:', data);
 
         if (!(data.id && data.totalPrice && data.description)) {
@@ -58,9 +69,12 @@ export async function POST(request: Request) {
             );
         }
         const created = await createOrder(data)
-        return NextResponse.json(created!.jsonResponse, { status: created!.httpStatusCode })
+        return NextResponse.json(created.jsonResponse, { status: created.httpStatusCode })
 
     } catch (err) {
+        if (err instanceof ApiError) {
+            return NextResponse.json(err.result ?? { error: err.message }, { status: err.statusCode ?? 500 })
+        }
         console.error('Create order error:', err)
         return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
     }

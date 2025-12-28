@@ -5,6 +5,10 @@ import { useMemo, useState } from "react";
 import { Beat, PurchaseType } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 
+const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_ENVIRONMENT === 'PRODUCTION' 
+    ? process.env.NEXT_PUBLIC_PROD_PAYPAL_CLIENT_ID ?? "" 
+    : process.env.NEXT_PUBLIC_SANDBOX_PAYPAL_CLIENT_ID ?? "";
+
 export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
     const router = useRouter();
     const [purchaseType, setPurchaseType] = useState<PurchaseType>("mp3");
@@ -195,7 +199,7 @@ export default function BuyClient({ beatToBuy }: { beatToBuy: Beat | null }) {
                 <div className="md:w-1/2 md:pl-6 md:flex md:justify-end">
                     <div className="w-full md:max-w-sm">
                         <PayPalScriptProvider options={{
-                            clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
+                            clientId: PAYPAL_CLIENT_ID,
                             currency: 'USD',
                             intent: 'capture'
                         }}>
