@@ -16,7 +16,6 @@ const PAYPAL_CLIENT_SECRET = IS_PRODUCTION
     : process.env.SANDBOX_PAYPAL_CLIENT_SECRET ?? "";
 
 if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
-    console.log('Missing PayPal credentials:', { PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET });
     throw new Error('Missing PayPal client ID or secret in environment variables');
 }
 
