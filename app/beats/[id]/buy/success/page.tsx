@@ -23,7 +23,7 @@ export default async function BuySuccessPage({
     if (!verified || !order || order.beat_id !== beatId) {
         return (
             <div className="container mx-auto max-w-2xl p-4">
-                <h1 className="text-xl font-semibold text-zinc-100">purchase confirmation</h1>
+                <h1 className="text-xl font-semibold text-black dark:text-zinc-100">purchase confirmation</h1>
                 <p className="mt-2 text-sm text-red-700">
                     This link is invalid or has expired.
                 </p>
