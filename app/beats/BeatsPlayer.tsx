@@ -190,7 +190,7 @@ export default function BeatsPlayer({ beats, onStateChange }: Props) {
                     </div>
                     <div className="text-xs text-zinc-300 truncate">
                         {currentBeat
-                            ? (currentBeat.artists.join(', ').replace('jj.aholics', 'Joe Anderson') || 'Unknown Artist')
+                            ? (currentBeat.artists.join(', ').replace('jj.aholics', 'jj.aholics') || 'Unknown Artist')
                             : '—'
                         }
                     </div>
@@ -251,7 +251,7 @@ export default function BeatsPlayer({ beats, onStateChange }: Props) {
                 {/* Right section: pricing (hidden on mobile) */}
                 <div className="hidden md:block w-24 justify-self-end">
                     <div className="flex flex-col items-end">
-                        { currentBeat && <BuyAnchor beat={currentBeat} /> }
+                        {currentBeat && <BuyAnchor beat={currentBeat} />}
                     </div>
                 </div>
             </div>
