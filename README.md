@@ -1,4 +1,4 @@
-# Joe Anderson Beat Store
+# jj.aholics Beat Store
 
 Production beat store for browsing and purchasing instrumentals (MP3/WAV leases + exclusive rights). Includes an in-browser player, PayPal checkout, order persistence, and automated contract + delivery email. Successful purchase triggers an email with the contract
 PDF attached and a presigned download URL valid for 24 hours.

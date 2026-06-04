@@ -11,15 +11,15 @@ import { baseUrl } from './sitemap'
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: 'beats by joe anderson',
-    template: '%s | beats by joe anderson',
+    default: 'beats by jj.aholics',
+    template: '%s | beats by jj.aholics',
   },
-  description: 'Store for beats produced by Joe Anderson.',
+  description: 'Store for beats produced by jj.aholics.',
   openGraph: {
-    title: 'beats by joe anderson',
-    description: 'Store for beats produced by Joe Anderson.',
+    title: 'beats by jj.aholics',
+    description: 'Store for beats produced by jj.aholics.',
     url: baseUrl,
-    siteName: 'beats by joe anderson',
+    siteName: 'beats by jj.aholics',
     locale: 'en_US',
     type: 'website',
   },
