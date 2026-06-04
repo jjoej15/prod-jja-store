@@ -5,7 +5,7 @@ export default function Page() {
         jj.aholics
       </h1>
       <p className="mb-4">
-        {`all compositions produced by joe anderson. for beat stems or other inquiries, email me @ jj.aholics@gmail.com.`}
+        {`all compositions produced by joe anderson. for beat stems or other inquiries, email me at jj.aholics@gmail.com.`}
       </p>
     </section>
   )
