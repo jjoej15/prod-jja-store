@@ -251,7 +251,7 @@ export default function BeatsPlayer({ beats, onStateChange }: Props) {
                 {/* Right section: pricing (hidden on mobile) */}
                 <div className="hidden md:block w-24 justify-self-end">
                     <div className="flex flex-col items-end">
-                        {currentBeat && <BuyAnchor beat={currentBeat} />}
+                        {currentBeat && <BuyAnchor beat={currentBeat} arrowIconColorOverride='neutral-300' />}
                     </div>
                 </div>
             </div>

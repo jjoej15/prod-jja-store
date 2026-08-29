@@ -25,7 +25,7 @@ export default function BeatsList({ beats, currentId, isPlaying, onToggle }: Pro
                         <div className="flex flex-col min-w-0">
                             <span className="font-medium truncate">{b.title}</span>
                             <span className="text-xs text-zinc-500 truncate">
-                                {b.artists.join(', ').replace('jj.aholics', 'jj.aholics') || 'Unknown Artist'}
+                                {b.artists.join(', ') || 'Unknown Artist'}
                             </span>
                         </div>
                         <div className="flex items-center gap-4 text-sm flex-shrink-0 ml-4">
@@ -44,7 +44,7 @@ export default function BeatsList({ beats, currentId, isPlaying, onToggle }: Pro
                                     alt={playing ? `Pause ${b.title}` : `Play ${b.title}`}
                                     width={24}
                                     height={24}
-                                    className="w-6 h-6 hover:cursor-pointer transition group-hover:brightness-75 invert dark:invert-0"
+                                    className="w-6 h-6 hover:cursor-pointer transition group-hover:brightness-75 invert"
                                 />
                             </button>
                         </div>
