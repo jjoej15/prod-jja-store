@@ -36,7 +36,7 @@ export const metadata: Metadata = {
 }
 
 const cx = (...classes) => classes.filter(Boolean).join(' ')
-const ancizarSerif = Ancizar_Serif();
+const ancizarSerif = Ancizar_Serif({ subsets: ['latin'] });
 
 export default function RootLayout({
   children,
